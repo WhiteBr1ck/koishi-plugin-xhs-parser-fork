@@ -1,22 +1,51 @@
 {
   "name": "koishi-plugin-xhs-parser-fork",
-  "description": "",
-  "version": "0.0.1",
+  "description": "小红书链接解析插件，支持新版短链、图片与视频解析",
+  "version": "0.1.5",
+  "private": true,
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
-    "dist"
+    "src"
   ],
+  "author": "WhiteBr1ck (https://github.com/WhiteBr1ck)",
   "license": "MIT",
-  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WhiteBr1ck/koishi-plugin-xhs-parser-fork.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WhiteBr1ck/koishi-plugin-xhs-parser-fork/issues"
+  },
+  "homepage": "https://github.com/WhiteBr1ck/koishi-plugin-xhs-parser-fork#readme",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --external:koishi --outfile=lib/index.js && tsc --emitDeclarationOnly",
+    "test": "tsx --test test/parser.test.ts",
+    "dev": "tsx scripts/local-test.ts",
+    "test:live": "tsx scripts/local-test.ts"
+  },
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "parser",
+    "xiaohongshu",
+    "xhs",
+    "rednote"
   ],
-  "devDependencies": {},
+  "koishi": {
+    "description": {
+      "zh": "小红书链接解析插件，支持新版短链、图片与视频解析"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "esbuild": "^0.23.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
   "peerDependencies": {
-    "koishi": "4.18.9"
+    "koishi": "^4.18.9"
   }
 }

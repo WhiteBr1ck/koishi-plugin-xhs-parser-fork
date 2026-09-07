@@ -1,17 +1,30 @@
-lib
-dist
-external
+# Build output
+/lib/
+/dist/
+*.tsbuildinfo
 
-node_modules
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-tsconfig.tsbuildinfo
+# Dependencies
+/node_modules/
+/external/
 
+# Tests and local verification
+/test/
+/tests/
+/scripts/
+/coverage/
+/.nyc_output/
+
+# Logs and caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .eslintcache
 .DS_Store
-.idea
-.vscode
+
+# Editors
+/.idea/
+/.vscode/
 *.suo
 *.ntvs*
 *.njsproj

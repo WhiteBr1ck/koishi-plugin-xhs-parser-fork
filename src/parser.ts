@@ -299,6 +299,7 @@ function sanitizeJsonPayload(payload: string): string {
   // literal undefined / NaN / Infinity which are not valid JSON tokens.
   // Replace value-positions of these literals with null so JSON.parse succeeds.
   return payload
+    .replace(/\bnew\s+Map\(\s*\[\s*\]\s*\)/g, '{}')
     .replace(/(?<=[:\[,{]\s*)undefined(?=\s*[,\]}\n])/g, 'null')
     .replace(/(?<=[:\[,{]\s*)NaN(?=\s*[,\]}\n])/g, 'null')
     .replace(/(?<=[:\[,{]\s*)Infinity(?=\s*[,\]}\n])/g, 'null')

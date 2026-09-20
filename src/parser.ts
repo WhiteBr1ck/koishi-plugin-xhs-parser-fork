@@ -53,6 +53,10 @@ const DEFAULT_HEADERS = {
   referer: 'https://www.xiaohongshu.com/explore',
 }
 
+// XHS currently redirects anonymous desktop requests to the login page, while
+// its public mobile share page still includes the note data in INITIAL_STATE.
+const ANONYMOUS_MOBILE_USER_AGENT = 'Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36'
+
 export function extractXhsLinks(content: string): string[] {
   const candidates = expandTextCandidates(content)
   const links: string[] = []
@@ -87,11 +91,25 @@ export async function resolveXhsLink(rawUrl: string, config: XhsConfigLike): Pro
 
 export async function fetchXhsNote(rawUrl: string, config: XhsConfigLike): Promise<XhsNote> {
   const url = await resolveXhsLink(rawUrl, config)
-  const html = await fetchText(url, config)
-  const data = extractInitialStateNote(html)
+  const hasCookie = Boolean(config.cookie?.trim())
+  let html = await fetchText(url, config, hasCookie ? undefined : ANONYMOUS_MOBILE_USER_AGENT)
+  let data: any | null = null
+
+  try {
+    data = extractInitialStateNote(html)
+  } catch (error) {
+    if (hasCookie) throw error
+  }
+
+  if (!data && !hasCookie && config.userAgent !== ANONYMOUS_MOBILE_USER_AGENT) {
+    html = await fetchText(url, config)
+    data = extractInitialStateNote(html)
+  }
 
   if (!data) {
-    throw new Error('未能从页面中读取小红书笔记数据。可能需要 Cookie，或链接已失效。')
+    throw new Error(hasCookie
+      ? '未能从页面中读取小红书笔记数据。Cookie 可能已失效，或链接已失效。'
+      : '未能从小红书公开页面读取笔记数据。该笔记可能要求登录，或链接已失效。')
   }
 
   return buildNote(data, url, config)
@@ -268,8 +286,11 @@ function isXhsShortLink(url: string) {
   }
 }
 
-async function fetchText(url: string, config: XhsConfigLike) {
-  const response = await fetchWithTimeout(url, config, { redirect: 'follow' })
+async function fetchText(url: string, config: XhsConfigLike, userAgent?: string) {
+  const response = await fetchWithTimeout(url, config, {
+    redirect: 'follow',
+    ...(userAgent ? { headers: { 'user-agent': userAgent } } : {}),
+  })
   if (!response.ok) throw new Error(`请求小红书页面失败：HTTP ${response.status}`)
   return response.text()
 }
@@ -296,9 +317,11 @@ async function fetchWithTimeout(url: string, config: XhsConfigLike, init: Reques
 
 function sanitizeJsonPayload(payload: string): string {
   // The XHS __INITIAL_STATE__ is JavaScript, not JSON — it may contain
-  // literal undefined / NaN / Infinity which are not valid JSON tokens.
-  // Replace value-positions of these literals with null so JSON.parse succeeds.
+  // empty Map values and literal undefined / NaN / Infinity which are not
+  // valid JSON tokens.
+  // Normalize them to JSON-compatible values before calling JSON.parse.
   return payload
+    .replace(/\bnew\s+Map\(\s*\[\s*\]\s*\)/g, '{}')
     .replace(/(?<=[:\[,{]\s*)undefined(?=\s*[,\]}\n])/g, 'null')
     .replace(/(?<=[:\[,{]\s*)NaN(?=\s*[,\]}\n])/g, 'null')
     .replace(/(?<=[:\[,{]\s*)Infinity(?=\s*[,\]}\n])/g, 'null')

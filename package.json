@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-xhs-parser-fork",
   "description": "小红书链接解析插件，支持新版短链、图片与视频解析",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
